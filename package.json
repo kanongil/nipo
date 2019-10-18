@@ -17,19 +17,19 @@
   "author": "Gil Pedersen <gpdev@gpost.dk>",
   "license": "BSD-2-Clause",
   "engines": {
-    "node": ">=8.9.0"
+    "node": ">=10.5.0"
   },
   "peerDependencies": {
     "@hapi/hapi": ">=18.0.0"
   },
   "dependencies": {
-    "@hapi/joi": "^15.1.1",
+    "@hapi/joi": "^16.1.7",
     "pino": "^5.13.2"
   },
   "devDependencies": {
-    "@hapi/boom": "^7.4.3",
-    "@hapi/code": "^6.0.0",
+    "@hapi/boom": "^8.0.1",
+    "@hapi/code": "^7.0.0",
     "@hapi/hapi": "^18.3.2",
-    "@hapi/lab": "^20.1.0"
+    "@hapi/lab": "^21.0.0"
   }
 }
