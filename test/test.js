@@ -1,5 +1,6 @@
 'use strict';
 
+const Net = require('net');
 const Stream = require('stream');
 
 const Boom = require('@hapi/boom');
@@ -504,6 +505,40 @@ describe('Nipo', () => {
             expect(line2.res.delay).to.be.at.least(0);
             expect(line2.res.reason).to.equal('Error: Invalid request query input');
             expect(line2.msg).to.equal('request-response');
+        });
+
+        it('logs "debug" level for server internal messages', async () => {
+
+            const { server, log } = await prepareServer();
+            server.route({ method: 'GET', path: '/', handler() {
+
+                return 'hi';
+            } });
+
+            await server.start();
+
+            log.shift();
+
+            await new Promise((resolve) => {
+
+                const socket = new Net.Socket().connect(server.info.port);
+                socket.on('close', resolve);
+                socket.on('connect', () => {
+
+                    socket.write('hi\n');
+                    setTimeout(() => socket.destroy(), 1);
+                });
+            });
+
+            expect(log).to.have.length(1);
+
+            const line = log.shift();
+            expect(line).to.only.contain(['level', 'time', 'server', 'tags', 'err', 'msg']);
+            expect(line.level).to.equal(20);
+            expect(line.server).to.exist();
+            expect(line.tags).to.equal(['connection', 'client', 'error']);
+            expect(typeof line.err.stack).to.equal('string');
+            expect(line.msg).to.equal('log-internal');
         });
 
         it('logs "fatal" level for implementation errors', async () => {
