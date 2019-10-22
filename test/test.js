@@ -8,11 +8,7 @@ const Hapi = require('@hapi/hapi');
 const Lab = require('@hapi/lab');
 const Nipo = require('..');
 
-
-const internals = {
-    BigInt: global.BigInt || ((number) => `${number}n`)
-};
-
+/* globals BigInt */
 
 const { describe, it } = exports.lab = Lab.script();
 const { expect } = Code;
@@ -264,11 +260,11 @@ describe('Nipo', () => {
                 tea.toJSON = () => '3';
 
                 const data = {
-                    count: internals.BigInt('1'),
+                    count: BigInt('1'),
                     type: 'china',
                     teas: [
                         1,
-                        internals.BigInt('2'),
+                        BigInt('2'),
                         tea,
                         tea
                     ]
@@ -365,7 +361,7 @@ describe('Nipo', () => {
 
             const { server, log } = await prepareServer();
 
-            server.log(['my', 'app'], internals.BigInt(1000));
+            server.log(['my', 'app'], BigInt(1000));
 
             expect(log).to.have.length(1);
             const line = log.shift();
@@ -402,7 +398,7 @@ describe('Nipo', () => {
             const { server, log } = await prepareServer({ level: 'trace' });
             server.route({ method: 'GET', path: '/', handler(request) {
 
-                request.log(['my', 'handler'], internals.BigInt(42));
+                request.log(['my', 'handler'], BigInt(42));
                 return 'ok';
             } });
 
@@ -456,13 +452,13 @@ describe('Nipo', () => {
 
             const { server, log } = await prepareServer();
 
-            server.log(['my', 'app'], internals.BigInt(1000));
+            server.log(['my', 'app'], BigInt(1000));
 
             server.plugins.nipo.eventLogger.level = 'error';
-            server.log(['my', 'app'], internals.BigInt(1001));
+            server.log(['my', 'app'], BigInt(1001));
 
             server.plugins.nipo.eventLogger.level = 'info';
-            server.log(['my', 'app'], internals.BigInt(1002));
+            server.log(['my', 'app'], BigInt(1002));
 
             expect(log).to.have.length(2);
             const line1 = log.shift();
