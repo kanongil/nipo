@@ -377,6 +377,26 @@ describe('Nipo', () => {
             expect(line.msg).to.equal('log-app');
         });
 
+        it('supports custom server "app" event levels', async () => {
+
+            const { server, log } = await prepareServer({}, {}, {
+                tagLevels: { hello: 'debug', my: 'warn' }
+            });
+
+            server.log(['app', 'trace'], 0);
+            server.log(['my', 'app'], 1);
+            server.log(['my', 'app', 'hello'], 2);
+            server.log(['app', 'hello'], 3);
+            server.log(['app'], 4);
+
+            expect(log).to.have.length(4);
+
+            expect(log.shift().level).to.equal(40);
+            expect(log.shift().level).to.equal(40);
+            expect(log.shift().level).to.equal(20);
+            expect(log.shift().level).to.equal(30);
+        });
+
         it('logs request "app" events', async () => {
 
             const { server, log } = await prepareServer({ level: 'trace' });
@@ -404,6 +424,32 @@ describe('Nipo', () => {
             expect(line2.res.delay).to.be.at.least(0);
             expect(line2.res.statusCode).to.equal(200);
             expect(line2.msg).to.equal('request-response');
+        });
+
+        it('supports custom request "app" event levels', async () => {
+
+            const { server, log } = await prepareServer({ level: 'debug' }, {}, {
+                tagLevels: { hello: 'debug', my: 'warn' }
+            });
+            server.route({ method: 'GET', path: '/', handler(request) {
+
+                request.log(['handler', 'trace'], 0);
+                request.log(['my', 'handler'], 1);
+                request.log(['my', 'handler', 'hello'], 2);
+                request.log(['handler', 'hello'], 3);
+                request.log(['handler'], 4);
+                return 'ok';
+            } });
+
+            const res = await server.inject('/');
+            expect(res.statusCode).to.equal(200);
+
+            expect(log).to.have.length(5);
+
+            expect(log.shift().level).to.equal(40);
+            expect(log.shift().level).to.equal(40);
+            expect(log.shift().level).to.equal(20);
+            expect(log.shift().level).to.equal(30);
         });
 
         it('handles level changes', async () => {
