@@ -65,6 +65,42 @@ describe('Nipo', () => {
         expect(log.shift()).to.contain({ level: 30, protocol: 'http', msg: 'server-stopped' });
     });
 
+    it('works with system modified stdio streams', async () => {
+
+        const stdout = [];
+        const stderr = [];
+
+        try {
+            process.stdout.write = (line) => {
+
+                stdout.push(line);
+            };
+
+            process.stderr.write = (line) => {
+
+                stderr.push(line);
+            };
+
+            const server = Hapi.server({ debug: false });
+            await server.register(Nipo);
+
+            await server.start();
+            await server.inject('/');
+            await server.stop();
+        }
+        finally {
+            delete process.stdout.write;
+            delete process.stderr.write;
+        }
+
+        expect(stdout).to.have.length(1);
+        expect(JSON.parse(stdout.shift())).to.contain(['level', 'time', 'req', 'route', 'res', 'msg']);
+
+        expect(stderr).to.have.length(2);
+        expect(JSON.parse(stderr.shift())).to.contain({ level: 30, protocol: 'http', msg: 'server-started' });
+        expect(JSON.parse(stderr.shift())).to.contain({ level: 30, protocol: 'http', msg: 'server-stopped' });
+    });
+
     describe('response', () => {
 
         it('is logged with relevant information', async () => {
