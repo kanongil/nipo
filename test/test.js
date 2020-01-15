@@ -6,10 +6,10 @@ const Stream = require('stream');
 const Boom = require('@hapi/boom');
 const Code = require('@hapi/code');
 const Hapi = require('@hapi/hapi');
+const Joi = require('@hapi/joi');
 const Lab = require('@hapi/lab');
 const Nipo = require('..');
 
-/* globals BigInt */
 
 const { describe, it } = exports.lab = Lab.script();
 const { expect } = Code;
@@ -518,7 +518,7 @@ describe('Nipo', () => {
         it('logs "trace" level error details for responses', async () => {
 
             const { server, log } = await prepareServer({ level: 'trace' });
-            server.route({ method: 'GET', path: '/', handler() { }, config: { validate: { query: { a: 'number ' } } } });
+            server.route({ method: 'GET', path: '/', handler() { }, config: { validate: { query: Joi.object({ a: 'number ' }) } } });
 
             const res = await server.inject('/?a=b');
             expect(res.statusCode).to.equal(400);
