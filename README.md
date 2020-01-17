@@ -1,6 +1,6 @@
 # nipo
 
-Simple and opiniotated Pino-based logger plugin for Hapi.js.
+Simple and opinionated Pino-based logger plugin for Hapi.js.
 
 [![Build Status](https://secure.travis-ci.org/kanongil/nipo.svg?branch=master)](http://travis-ci.org/kanongil/nipo)
 
