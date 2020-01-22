@@ -453,6 +453,52 @@ describe('Nipo', () => {
             expect(line2.req.clientIp).to.equal('1234');
         });
 
+        it('supports server level route-defined properties', async () => {
+
+            const { server, log } = await prepareServer({ level: 'info' }, {
+                routes: {
+                    plugins: {
+                        nipo: {
+                            req: {
+                                clientIp: 'headers.x-real-ip'
+                            }
+                        }
+                    }
+                }
+            });
+
+            server.route({
+                method: 'GET', path: '/', config: {
+                    handler: () => 'ok',
+                    plugins: {
+                        nipo: {
+                            req: {
+                                headers: 'headers'
+                            }
+                        }
+                    }
+
+                }
+            });
+
+            await server.initialize();
+
+            const res = await server.inject({ url: '/', headers: { 'x-real-ip': '1234' } });
+            expect(res.statusCode).to.equal(200);
+
+            const res2 = await server.inject({ url: '/test', headers: { 'x-real-ip': '1234' } });
+            expect(res2.statusCode).to.equal(404);
+
+            expect(log).to.have.length(2);
+            const line1 = log.shift();
+            expect(line1.req.headers).to.exist();
+            expect(line1.req.headers).to.contain(['user-agent', 'host']);
+            expect(line1.req.clientIp).to.equal('1234');
+
+            const line2 = log.shift();
+            expect(line2.req.clientIp).to.equal('1234');
+        });
+
         it('initialize fails on bad route config', async () => {
 
             const { server } = await prepareServer();
