@@ -388,7 +388,89 @@ describe('Nipo', () => {
             expect(line2.level).to.equal(60);
             expect(line2.message).to.equal('Unknown throw during: onResponseHandler');
             expect(line2.msg).to.equal('nipo-error');
+        });
 
+        it('logs route-defined properties', async () => {
+
+            const { server, log } = await prepareServer();
+
+            server.route({ method: 'GET', path: '/', config: {
+                handler: () => 'ok',
+                plugins: {
+                    nipo: {
+                        req: {
+                            headers: 'headers'
+                        },
+                        res: {
+                            headers: 'response.headers'
+                        }
+                    }
+                }
+            } });
+
+            await server.initialize();
+
+            const res = await server.inject('/');
+            expect(res.statusCode).to.equal(200);
+
+            expect(log).to.have.length(1);
+            const line1 = log.shift();
+            expect(line1.req.headers).to.exist();
+            expect(line1.req.headers).to.contain(['user-agent', 'host']);
+            expect(line1.res.headers).to.exist();
+            expect(line1.res.headers).to.contain(['content-type', 'content-length']);
+        });
+
+        it('route-defined properties override existing properties', async () => {
+
+            const { server, log } = await prepareServer();
+            server.route({
+                method: 'GET', path: '/', config: {
+                    handler: () => 'ok',
+                    plugins: {
+                        nipo: {
+                            req: {
+                                clientIp: ['headers', 'x-real-ip']
+                            }
+                        }
+                    }
+                }
+            });
+
+            await server.initialize();
+
+            const res1 = await server.inject('/');
+            expect(res1.statusCode).to.equal(200);
+
+            const res2 = await server.inject({ url: '/', headers: { 'x-real-ip': '1234' } });
+            expect(res2.statusCode).to.equal(200);
+
+            expect(log).to.have.length(2);
+            const line1 = log.shift();
+            expect(line1.req.clientIp).to.equal('127.0.0.1');
+
+            const line2 = log.shift();
+            expect(line2.req.clientIp).to.equal('1234');
+        });
+
+        it('initialize fails on bad route config', async () => {
+
+            const { server } = await prepareServer();
+
+            server.route({
+                method: 'GET', path: '/', config: {
+                    handler: () => 'ok',
+                    plugins: {
+                        nipo: {
+                            req: {
+                                test: true
+                            }
+                        }
+                    }
+                }
+            });
+
+            await expect(server.initialize()).to.reject('"req.test" must be one of [array, string]');
         });
     });
 

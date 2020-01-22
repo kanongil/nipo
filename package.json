@@ -23,6 +23,7 @@
     "@hapi/hapi": ">=18.0.0"
   },
   "dependencies": {
+    "@hapi/hoek": "^9.0.2",
     "@hapi/joi": "^17.0.2",
     "pino": "^5.13.2"
   },
