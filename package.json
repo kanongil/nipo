@@ -24,13 +24,13 @@
   },
   "dependencies": {
     "@hapi/hoek": "^9.0.2",
-    "@hapi/joi": "^17.0.2",
+    "joi": "^17.3.0",
     "pino": "^6.3.2"
   },
   "devDependencies": {
     "@hapi/boom": "^9.0.0",
-    "@hapi/code": "^8.0.1",
-    "@hapi/hapi": "^19.0.4",
-    "@hapi/lab": "^22.0.3"
+    "@hapi/code": "^8.0.2",
+    "@hapi/hapi": "20.0.3",
+    "@hapi/lab": "^24.1.0"
   }
 }

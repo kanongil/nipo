@@ -6,7 +6,7 @@ const Stream = require('stream');
 const Boom = require('@hapi/boom');
 const Code = require('@hapi/code');
 const Hapi = require('@hapi/hapi');
-const Joi = require('@hapi/joi');
+const Joi = require('joi');
 const Lab = require('@hapi/lab');
 const Nipo = require('..');
 
@@ -713,7 +713,7 @@ describe('Nipo', () => {
 
                     // eslint-disable-next-line no-unused-vars
                     const a = 1;
-                    // eslint-disable-next-line no-const-assign
+                    // eslint-disable-next-line no-const-assign,no-unused-vars
                     a = 2;
                 }
             });
