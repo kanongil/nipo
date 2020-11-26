@@ -2,7 +2,7 @@
 
 Simple and opinionated Pino-based logger plugin for Hapi.js.
 
-[![Build Status](https://secure.travis-ci.org/kanongil/nipo.svg?branch=master)](http://travis-ci.org/kanongil/nipo)
+![Node.js CI](https://github.com/kanongil/nipo/workflows/Node.js%20CI/badge.svg)
 
 Lead Maintainer: [Gil Pedersen](https://github.com/kanongil)
 

@@ -20,7 +20,7 @@
     "node": ">=12.13.0"
   },
   "peerDependencies": {
-    "@hapi/hapi": ">=18.0.0"
+    "@hapi/hapi": ">=20.0.0"
   },
   "dependencies": {
     "@hapi/hoek": "^9.0.2",
