@@ -1,6 +1,6 @@
 {
   "name": "nipo",
-  "version": "0.5.0",
+  "version": "1.0.0",
   "description": "Simple response logging in Hapi.js servers using Pino",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
