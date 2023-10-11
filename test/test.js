@@ -685,7 +685,7 @@ describe('Nipo', () => {
 
             await new Promise((resolve) => {
 
-                const socket = new Net.Socket().connect(server.info.port);
+                const socket = new Net.Socket().connect(server.info.port, '127.0.0.1');
                 socket.on('close', resolve);
                 socket.on('connect', () => {
 
