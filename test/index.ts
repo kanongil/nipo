@@ -20,7 +20,7 @@ await server.register({
             test: 'debug'
         },
         pino: {
-            prettyPrint: false
+            level: 'info'
         }
     }
 });

@@ -5,7 +5,7 @@ import { Stream } from 'node:stream';
 import { Plugin, Request } from '@hapi/hapi';
 import { Logger, LoggerOptions, Level } from 'pino';
 
-type AllowedPinoOptions = 'name' | 'level' | 'redact' | 'formatters' | 'enabled' | 'crlf' | 'timestamp' | 'messageKey';
+type AllowedPinoOptions = 'name' | 'level' | 'redact' | 'formatters' | 'enabled' | 'crlf' | 'timestamp' | 'messageKey' | 'transport';
 
 export interface NipoRegistrationOptions {
 
@@ -33,13 +33,7 @@ export interface NipoRegistrationOptions {
     /**
      * Pino logger options passed to constructor.
      */
-    pino?: Pick<LoggerOptions, AllowedPinoOptions> & {
-
-        /**
-        * Use pino-pretty for output formatting.
-         */
-        prettyPrint?: boolean;
-    };
+    pino?: Pick<LoggerOptions, AllowedPinoOptions>;
 }
 
 export const plugin: Plugin<NipoRegistrationOptions> & {

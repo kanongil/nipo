@@ -18,4 +18,4 @@ await server.register({
 ```
 
 This will log JSON'ified response entries to `stdout`, and server and request events to `stderr`.
-To make the logs prettier while developing, install the `pino-pretty` module, and enable it using the `prettyPrint` pino option.
+To make the logs prettier while developing, install the `pino-pretty` module, and enable it using the `transport` pino option.
