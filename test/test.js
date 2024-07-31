@@ -10,6 +10,8 @@ const Joi = require('joi');
 const Lab = require('@hapi/lab');
 const Nipo = require('..');
 
+const Serialize = require('../lib/serialize');
+
 
 const { describe, it } = exports.lab = Lab.script();
 const { expect } = Code;
@@ -321,7 +323,7 @@ describe('Nipo', () => {
             expect(line.level).to.equal(40);
             expect(line.res.statusCode).to.equal(418);
             expect(line.res.delay).to.be.at.least(0);
-            expect(line.res.reason).to.equal('Error: I\'m a teapot');
+            expect(line.res.reason).to.equal('Boom: I\'m a teapot');
             expect(line.res.data).to.equal({
                 type: 'china',
                 count: '1n',
@@ -350,7 +352,7 @@ describe('Nipo', () => {
             expect(line.route).to.equal({});
             expect(line.res.statusCode).to.equal(500);
             expect(line.res.delay).to.be.at.least(0);
-            expect(line.res.reason).to.equal('Error: fail');
+            expect(line.res.reason).to.equal('Boom: fail');
 
             await server.stop();
         });
@@ -667,7 +669,7 @@ describe('Nipo', () => {
             expect(line2.req.id).to.equal(line1.request);
             expect(line2.res.statusCode).to.equal(400);
             expect(line2.res.delay).to.be.at.least(0);
-            expect(line2.res.reason).to.equal('Error: Invalid request query input');
+            expect(line2.res.reason).to.equal('Boom: Invalid request query input');
             expect(line2.msg).to.equal('request-response');
         });
 
@@ -728,7 +730,7 @@ describe('Nipo', () => {
             expect(line1.level).to.equal(60);
             expect(line1.request).to.exist();
             expect(line1.tags).to.equal(['internal', 'implementation', 'error']);
-            expect(line1.err.type).to.equal('TypeError');
+            expect(line1.err.type).to.equal('Boom(TypeError)');
             expect(typeof line1.err.stack).to.equal('string');
             expect(line1.msg).to.equal('request-error');
 
@@ -738,8 +740,165 @@ describe('Nipo', () => {
             expect(line2.req.id).to.equal(line1.request);
             expect(line2.res.statusCode).to.equal(500);
             expect(line2.res.delay).to.be.at.least(0);
-            expect(line2.res.reason).to.equal('TypeError: Assignment to constant variable.');
+            expect(line2.res.reason).to.equal('Boom(TypeError): Assignment to constant variable.');
             expect(line2.msg).to.equal('request-response');
+        });
+    });
+
+    describe('error serializer', () => {
+
+        it('handles errors', () => {
+
+            const err = new TypeError('fail');
+            const res = Serialize.serializers.err(err);
+            expect(res.type).to.equal('TypeError');
+            expect(res.message).to.equal('fail');
+            expect(res.code).to.not.exist();
+            expect(res.stack).to.contain('fail');
+        });
+
+        it('does not modify non-errors', () => {
+
+            const noterr = { hello: 'world' };
+            const res = Serialize.serializers.err(noterr);
+            expect(res).to.shallow.equal(noterr);
+        });
+
+        it('handles errors with code', async () => {
+
+            let error;
+
+            try {
+                await Net.createServer('bad');
+            }
+            catch (err) {
+                error = err;
+            }
+
+            const res = Serialize.serializers.err(error);
+            expect(res.type).to.equal('TypeError');
+            expect(res.message).to.include('bad');
+            expect(res.code).to.equal('ERR_INVALID_ARG_TYPE');
+        });
+
+        it('handles errors with cause', () => {
+
+            const err = new TypeError('fail');
+            err.cause = new Error('real error');
+
+            const res = Serialize.serializers.err(err);
+            expect(res.type).to.equal('TypeError');
+            expect(res.message).to.equal('fail: real error');
+            expect(res.code).to.not.exist();
+            expect(res.stack).to.contain('fail');
+            expect(res.stack).to.contain('real error');
+        });
+
+        it('handles errors with non-error cause', () => {
+
+            const err = new TypeError('fail');
+            err.cause = 'nothing';
+
+            const res = Serialize.serializers.err(err);
+            expect(res.type).to.equal('TypeError');
+            expect(res.message).to.equal('fail: nothing');
+            expect(res.code).to.not.exist();
+            expect(res.stack).to.contain('fail');
+            expect(res.stack).to.not.contain('nothing');
+        });
+
+        it('handles errors with circular cause', () => {
+
+            const err = new TypeError('fail');
+            err.cause = new Error('real error');
+            err.cause.cause = err;
+
+            const res = Serialize.serializers.err(err);
+            expect(res.type).to.equal('TypeError');
+            expect(res.message).to.equal('fail: real error: ...');
+            expect(res.code).to.not.exist();
+            expect(res.stack).to.contain('fail');
+            expect(res.stack).to.contain('real error');
+        });
+
+        it('handles regular boom errors', () => {
+
+            const res = Serialize.serializers.err(Boom.forbidden('DO NOT ENTER!'));
+            expect(res.type).to.equal('Boom');
+            expect(res.message).to.equal('DO NOT ENTER!');
+            expect(res.code).to.equal(403);
+            expect(res.stack).to.contain('DO NOT ENTER');
+        });
+
+        it('handles boomified errors', () => {
+
+            const err = new TypeError('fail');
+            const res = Serialize.serializers.err(Boom.boomify(err));
+            expect(res.type).to.equal('Boom(TypeError)');
+            expect(res.message).to.equal('fail');
+            expect(res.code).to.equal(500);
+            expect(res.stack).to.contain('fail');
+        });
+
+        it('handles boomified custom errors', () => {
+
+            class MyError extends Error {
+                name = 'MyError';
+            }
+
+            const err = new MyError('fail');
+            const res = Serialize.serializers.err(Boom.boomify(err));
+            expect(res.type).to.equal('Boom(MyError)');
+            expect(res.message).to.equal('fail');
+            expect(res.code).to.equal(500);
+            expect(res.stack).to.contain('fail');
+        });
+
+        it('includes "data" field', () => {
+
+            const res = Serialize.serializers.err(Boom.notFound('huh?', { my: 'data' }));
+            expect(res.data).to.equal({ my: 'data' });
+        });
+
+        it('handles boom errors with cause', () => {
+
+            const err1 = Boom.internal('oops');
+            err1.cause = new Error('real error');
+
+            const res1 = Serialize.serializers.err(err1);
+            expect(res1.type).to.equal('Boom');
+            expect(res1.message).to.equal('oops: real error');
+            expect(res1.stack).to.contain('oops');
+            expect(res1.stack).to.contain('real error');
+
+            const err2 = Boom.internal('oops');
+            err2.cause = new TypeError('real error');
+
+            const res2 = Serialize.serializers.err(err2);
+            expect(res2.type).to.equal('Boom(TypeError)');
+            expect(res2.message).to.equal('oops: real error');
+            expect(res2.stack).to.contain('oops');
+            expect(res2.stack).to.contain('real error');
+        });
+
+        it('handles boom errors with "cause" in "data"', () => {
+
+            const err = new Error('fail');
+            const res = Serialize.serializers.err(Boom.notFound('oops', err));
+            expect(res.type).to.equal('Boom');
+            expect(res.message).to.equal('oops: fail');
+            expect(res.code).to.equal(404);
+            expect(res.stack).to.contain('oops');
+            expect(res.stack).to.contain('fail');
+        });
+
+        it('handles boom errors with custom name', () => {
+
+            const err = Boom.notFound('oops');
+            err.name = 'FourOhFour';
+
+            const res = Serialize.serializers.err(err);
+            expect(res.type).to.equal('Boom(FourOhFour)');
         });
     });
 });
